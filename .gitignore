@@ -1,0 +1,10 @@
+.lock-waf*
+.waf*
+pebminders-client/build
+pebminders-client/include
+pebminders-client/lib
+pebminders-client/pebble_app.ld
+pebminders-client/resources/wscript
+pebminders-client/tools
+pebminders-client/waf
+pebminders-client/wscript
