@@ -27,6 +27,18 @@ void line_layer_update_callback(Layer *me, GContext* ctx) {
 	graphics_draw_line(ctx, GPoint(8, 98), GPoint(131, 98));
 }
 
+void init_text_layer(TextLayer *tlayer, GRect frame, GFont font) {
+	text_layer_init(tlayer, window.layer.frame);
+	text_layer_set_text_color(tlayer, GColorWhite);
+	text_layer_set_background_color(tlayer, GColorClear);
+	layer_set_frame(&(tlayer->layer), frame);
+	text_layer_set_font(
+		tlayer,
+		font
+	);
+	layer_add_child(&window.layer, &(tlayer->layer));
+}
+
 void handle_init(AppContextRef ctx) {
 	window_init(&window, "PebMinders");
 	window_stack_push(&window, true /* Animated */);
@@ -34,41 +46,28 @@ void handle_init(AppContextRef ctx) {
 
 	resource_init_current_app(&APP_RESOURCES);
 
-	// TODO factor out this setup?
 	// TODO consts for the frame
-	text_layer_init(&text_pebminder_layer, window.layer.frame);
-	text_layer_set_text_color(&text_pebminder_layer, GColorWhite);
-	text_layer_set_background_color(&text_pebminder_layer, GColorClear);
-	layer_set_frame(&text_pebminder_layer.layer, GRect(1, 1, 144-1, 168-68));
-	text_layer_set_font(
+	init_text_layer(
 		&text_pebminder_layer,
+		GRect(1, 1, 144-1, 168-68),
 		fonts_get_system_font(FONT_KEY_GOTHIC_14)
 	);
-	layer_add_child(&window.layer, &text_pebminder_layer.layer);
 
-	text_layer_init(&text_date_layer, window.layer.frame);
-	text_layer_set_text_color(&text_date_layer, GColorWhite);
-	text_layer_set_background_color(&text_date_layer, GColorClear);
-	layer_set_frame(&text_date_layer.layer, GRect(8, 68, 144-8, 168-68));
-	text_layer_set_font(
+	init_text_layer(
 		&text_date_layer,
+		GRect(8, 68, 144-8, 168-68),
 		fonts_load_custom_font(
 			resource_get_handle(RESOURCE_ID_FONT_ROBOTO_CONDENSED_21)
 		)
 	);
-	layer_add_child(&window.layer, &text_date_layer.layer);
 
-	text_layer_init(&text_time_layer, window.layer.frame);
-	text_layer_set_text_color(&text_time_layer, GColorWhite);
-	text_layer_set_background_color(&text_time_layer, GColorClear);
-	layer_set_frame(&text_time_layer.layer, GRect(7, 92, 144-7, 168-92));
-	text_layer_set_font(
+	init_text_layer(
 		&text_time_layer,
+		GRect(7, 92, 144-7, 168-92),
 		fonts_load_custom_font(
 			resource_get_handle(RESOURCE_ID_FONT_ROBOTO_BOLD_SUBSET_49)
 		)
 	);
-	layer_add_child(&window.layer, &text_time_layer.layer);
 
 	layer_init(&line_layer, window.layer.frame);
 	line_layer.update_proc = &line_layer_update_callback;
