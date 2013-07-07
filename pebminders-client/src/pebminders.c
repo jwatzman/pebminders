@@ -13,6 +13,16 @@ PBL_APP_INFO(
 	APP_INFO_WATCH_FACE
 );
 
+#define SCREEN_WIDTH 144
+#define SCREEN_HEIGHT 168
+
+#define PEBMINDER_X 1
+#define PEBMINDER_Y 1
+#define DATE_X 8
+#define DATE_Y 68
+#define TIME_X 7
+#define TIME_Y 92
+
 Window window;
 
 TextLayer text_pebminder_layer;
@@ -46,16 +56,20 @@ void handle_init(AppContextRef ctx) {
 
 	resource_init_current_app(&APP_RESOURCES);
 
-	// TODO consts for the frame
 	init_text_layer(
 		&text_pebminder_layer,
-		GRect(1, 1, 144-1, 168-68),
+		GRect(
+			PEBMINDER_X,
+			PEBMINDER_Y,
+			SCREEN_WIDTH - PEBMINDER_X,
+			DATE_Y - PEBMINDER_Y
+		),
 		fonts_get_system_font(FONT_KEY_GOTHIC_14)
 	);
 
 	init_text_layer(
 		&text_date_layer,
-		GRect(8, 68, 144-8, 168-68),
+		GRect(DATE_X, DATE_Y, SCREEN_WIDTH-DATE_X, SCREEN_HEIGHT-DATE_Y),
 		fonts_load_custom_font(
 			resource_get_handle(RESOURCE_ID_FONT_ROBOTO_CONDENSED_21)
 		)
@@ -63,7 +77,7 @@ void handle_init(AppContextRef ctx) {
 
 	init_text_layer(
 		&text_time_layer,
-		GRect(7, 92, 144-7, 168-92),
+		GRect(TIME_X, TIME_Y, SCREEN_WIDTH-TIME_X, SCREEN_HEIGHT-TIME_Y),
 		fonts_load_custom_font(
 			resource_get_handle(RESOURCE_ID_FONT_ROBOTO_BOLD_SUBSET_49)
 		)
