@@ -1,13 +1,13 @@
 #include "pebble_os.h"
 #include "pebble_app.h"
 #include "pebble_fonts.h"
+#include "http.h"
 
-#define MY_UUID {0x40, 0x5A, 0x82, 0xF9, 0x7E, 0xF2, 0x43, 0x6F, 0xA3, 0x8B, 0x59, 0x35, 0x68, 0xD0, 0x0C, 0xD7}
 PBL_APP_INFO(
-	MY_UUID,
+	HTTP_UUID,
 	"PebMinders",
 	"Josh Watzman",
-	3,
+	1,
 	0 /* App version */,
 	RESOURCE_ID_IMAGE_MENU_ICON,
 	APP_INFO_WATCH_FACE
@@ -23,6 +23,8 @@ PBL_APP_INFO(
 #define TIME_X 7
 #define TIME_Y 92
 
+#define APP_ID 1499260626
+
 Window window;
 
 TextLayer text_pebminder_layer;
@@ -30,6 +32,22 @@ TextLayer text_date_layer;
 TextLayer text_time_layer;
 
 Layer line_layer;
+
+void handle_failure(int32_t cookie, int http_status, void *context) {
+	text_layer_set_text(&text_pebminder_layer, "• Failure");
+}
+
+void handle_success(
+		int32_t cookie,
+		int http_status,
+		DictionaryIterator *iter,
+		void *context) {
+	text_layer_set_text(&text_pebminder_layer, "• Success");
+}
+
+void handle_reconnect(void *context) {
+	text_layer_set_text(&text_pebminder_layer, "• Reconnect");
+}
 
 void line_layer_update_callback(Layer *me, GContext* ctx) {
 	graphics_context_set_stroke_color(ctx, GColorWhite);
@@ -87,8 +105,16 @@ void handle_init(AppContextRef ctx) {
 	line_layer.update_proc = &line_layer_update_callback;
 	layer_add_child(&window.layer, &line_layer);
 
-	static char hello_text[] = "• Hello world!";
-	text_layer_set_text(&text_pebminder_layer, hello_text);
+	text_layer_set_text(&text_pebminder_layer, "• Init");
+	http_set_app_id(APP_ID);
+	http_register_callbacks(
+		(HTTPCallbacks){
+			.failure=handle_failure,
+			.success=handle_success,
+			.reconnect=handle_reconnect
+		},
+		NULL
+	);
 
 	// TODO: Update display here to avoid blank display on launch?
 }
@@ -119,17 +145,45 @@ void handle_minute_tick(AppContextRef ctx, PebbleTickEvent *t) {
 	}
 
 	text_layer_set_text(&text_time_layer, time_text);
+
+
+	static int http_test = 0;
+	if (http_test) {
+		return;
+	}
+	http_test = 1;
+
+	DictionaryIterator *body;
+	HTTPResult result = http_out_get(
+		"http://charybdis.local:8000/test.json",
+		APP_ID,
+		&body
+	);
+	if (result != HTTP_OK) {
+		text_layer_set_text(&text_pebminder_layer, "• http_out_get failed");
+		return;
+	}
+	if (http_out_send() != HTTP_OK) {
+		text_layer_set_text(&text_pebminder_layer, "• http_out_send failed");
+		return;
+	}
+	text_layer_set_text(&text_pebminder_layer, "• Sent");
 }
 
 void pbl_main(void *params) {
 	PebbleAppHandlers handlers = {
 		.init_handler = &handle_init,
-
 		.tick_info = {
 			.tick_handler = &handle_minute_tick,
 			.tick_units = MINUTE_UNIT
+		},
+		.messaging_info = {
+			.buffer_sizes = {
+				// Cargo cult from WeatherWatch
+				.inbound = 124,
+				.outbound = 256
+			}
 		}
-
 	};
 
 	app_event_loop(params, &handlers);
