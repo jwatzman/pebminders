@@ -25,6 +25,13 @@ PBL_APP_INFO(
 
 #define APP_ID 1499260626
 
+#define DATA_KEY 1
+
+// Empircally, this is about as big as you get before httpebble or something
+// starts failing, no idea why.
+#define PEBMINDER_MAX_LEN 72
+char pebminder_data[PEBMINDER_MAX_LEN];
+
 Window window;
 
 TextLayer text_pebminder_layer;
@@ -40,9 +47,23 @@ void handle_failure(int32_t cookie, int http_status, void *context) {
 void handle_success(
 		int32_t cookie,
 		int http_status,
-		DictionaryIterator *iter,
+		DictionaryIterator *dict,
 		void *context) {
-	text_layer_set_text(&text_pebminder_layer, "• Success");
+
+	if (cookie != APP_ID) {
+		text_layer_set_text(&text_pebminder_layer, "• Cookie");
+		return;
+	}
+
+	Tuple *data = dict_find(dict, DATA_KEY);
+	if (!data) {
+		text_layer_set_text(&text_pebminder_layer, "• dict_find");
+		return;
+	}
+
+	strncpy(pebminder_data, data->value->cstring, PEBMINDER_MAX_LEN-1);
+	pebminder_data[PEBMINDER_MAX_LEN-1] = '\0'; // Force null termination
+	text_layer_set_text(&text_pebminder_layer, pebminder_data);
 }
 
 void handle_reconnect(void *context) {
